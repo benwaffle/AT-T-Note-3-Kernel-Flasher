@@ -16,7 +16,7 @@
     <Button
         android:layout_width="fill_parent"
         android:layout_height="87dp"
-        android:text="Flash NC2 Kernel"
+        android:text="Flash"
         android:id="@+id/button" />
 
     <ProgressBar
@@ -32,14 +32,6 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:id="@+id/status_text" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="NC2 Flasher by benwaffle"
-        android:id="@+id/benwaffle"
-        android:layout_gravity="bottom|center_horizontal" />
 
 </LinearLayout>
 

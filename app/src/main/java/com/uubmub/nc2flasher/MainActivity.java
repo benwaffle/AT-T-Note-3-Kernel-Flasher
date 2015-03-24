@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.widget.*;
@@ -86,6 +87,8 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
+            Looper.prepare();
+
             try (InputStream kernel = getAssets().open("nc2_kernel_boot.img")) {
                 byte bs[] = new byte[8];
                 kernel.read(bs);
@@ -131,6 +134,7 @@ public class MainActivity extends ActionBarActivity {
                     })
                     .show();
 
+            Looper.loop();
             return null;
         }
     }
