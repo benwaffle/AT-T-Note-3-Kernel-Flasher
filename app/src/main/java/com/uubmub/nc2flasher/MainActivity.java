@@ -25,24 +25,14 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        flash = (Button)findViewById(R.id.button);
-        progress = (ProgressBar)findViewById(R.id.progressBar);
+        flash = (Button) findViewById(R.id.button);
+        progress = (ProgressBar) findViewById(R.id.progressBar);
 
-        ((ListView)findViewById(R.id.listView)).setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1) {{
+        ((ListView) findViewById(R.id.listView)).setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1) {{
             add("For SM-N900A only!");
             add("I am not responsible for anything that may happen to your device.");
             add("Make sure you can flash NL1 back via flashable zip from thread.");
         }});
-
-        flash.setEnabled(false);
-        try {
-            new Checks().execute().get();
-        } catch (Exception e) {
-            e.printStackTrace();
-            finish();
-        }
-        if (!isFinishing())
-            flash.setEnabled(true);
 
         flash.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -52,12 +42,25 @@ public class MainActivity extends ActionBarActivity {
                 new BinaryFlasher().execute();
             }
         });
+
+        flash.setEnabled(false);
+        try {
+            new Checks(flash).execute().get();
+            flash.setEnabled(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            finish();
+        }
+
+
     }
 
     class BinaryFlasher extends AsyncTask<Void, Void, Void> {
         String bytes;
 
-        void setError(final String s) {setError(s, null);}
+        void setError(final String s) {
+            setError(s, null);
+        }
 
         void setError(final String action, Throwable t) {
             if (t == null)
@@ -87,13 +90,11 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
-            Looper.prepare();
-
             try (InputStream kernel = getAssets().open("nc2_kernel_boot.img")) {
                 byte bs[] = new byte[8];
                 kernel.read(bs);
 
-                if (!Arrays.equals(bs, new byte[]{'A','N','D','R','O','I','D','!'})) {
+                if (!Arrays.equals(bs, new byte[]{'A', 'N', 'D', 'R', 'O', 'I', 'D', '!'})) {
                     setError("Signature check failed");
                     return null;
                 }
@@ -107,7 +108,7 @@ public class MainActivity extends ActionBarActivity {
             File bootimg;
             try {
                 InputStream src = getAssets().open("nc2_kernel_boot.img");
-                bootimg = File.createTempFile("nc2_kernel_boot",".img");
+                bootimg = File.createTempFile("nc2_kernel_boot", ".img");
                 copyFile(src, bootimg);
                 src.close();
             } catch (IOException e) {
@@ -122,8 +123,9 @@ public class MainActivity extends ActionBarActivity {
 
             bootimg.delete();
 
+            Looper.prepare();
             new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("rebooting")
+                    .setTitle("Reboot")
                     .setMessage("Rebooting now")
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setNeutralButton("OK", new DialogInterface.OnClickListener() {
@@ -133,13 +135,19 @@ public class MainActivity extends ActionBarActivity {
                         }
                     })
                     .show();
-
             Looper.loop();
+
             return null;
         }
     }
 
     class Checks extends AsyncTask<Void, Void, Void> {
+        Button flash;
+
+        public Checks(Button flash) {
+            this.flash = flash;
+        }
+
         @Override
         protected Void doInBackground(Void... params) {
             PackageManager pm = getPackageManager();
@@ -158,6 +166,7 @@ public class MainActivity extends ActionBarActivity {
             }
 
             if (!haveSS || !haveBBX) {
+                Looper.prepare();
                 new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Safestrap/Busybox")
                         .setMessage("Either safestrap or busybox could not be found on this device. Both are needed to flash NC2.")
@@ -169,9 +178,15 @@ public class MainActivity extends ActionBarActivity {
                             }
                         })
                         .show();
+                Looper.loop();
             }
 
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            flash.setEnabled(true);
         }
     }
 
