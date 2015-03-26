@@ -31,8 +31,10 @@ public class MainActivity extends ActionBarActivity {
         ((ListView) findViewById(R.id.listView)).setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1) {{
             add("For SM-N900A only!");
             add("I am not responsible for anything that may happen to your device.");
-            add("Make sure you can flash NL1 back via flashable zip from thread.");
+            add("Make sure you can flash NL1 or OC1 back.");
         }});
+
+        flash.setEnabled(false);
 
         flash.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -43,25 +45,10 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        flash.setEnabled(false);
-        try {
-            new Checks(flash).execute().get();
-            flash.setEnabled(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            finish();
-        }
-
-
+        new Checks().execute();
     }
 
     class BinaryFlasher extends AsyncTask<Void, Void, Void> {
-        String bytes;
-
-        void setError(final String s) {
-            setError(s, null);
-        }
-
         void setError(final String action, Throwable t) {
             if (t == null)
                 setText(action + ". Nothing was flashed.");
@@ -79,23 +66,13 @@ public class MainActivity extends ActionBarActivity {
         }
 
         @Override
-        protected void onPostExecute(Void v) {
-            MainActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    progress.setVisibility(View.GONE);
-                }
-            });
-        }
-
-        @Override
         protected Void doInBackground(Void... params) {
             try (InputStream kernel = getAssets().open("nc2_kernel_boot.img")) {
                 byte bs[] = new byte[8];
                 kernel.read(bs);
 
                 if (!Arrays.equals(bs, new byte[]{'A', 'N', 'D', 'R', 'O', 'I', 'D', '!'})) {
-                    setError("Signature check failed");
+                    setError("Signature check failed", null);
                     return null;
                 }
             } catch (IOException e) {
@@ -123,15 +100,24 @@ public class MainActivity extends ActionBarActivity {
 
             bootimg.delete();
 
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progress.setVisibility(View.GONE);
+                }
+            });
+
             Looper.prepare();
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("Reboot")
-                    .setMessage("Rebooting now")
+                    .setMessage("Your phone will reboot now.")
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setNeutralButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             Shell.SU.run("reboot");
+                            finish();
+                            System.exit(0);
                         }
                     })
                     .show();
@@ -142,28 +128,13 @@ public class MainActivity extends ActionBarActivity {
     }
 
     class Checks extends AsyncTask<Void, Void, Void> {
-        Button flash;
-
-        public Checks(Button flash) {
-            this.flash = flash;
-        }
-
         @Override
         protected Void doInBackground(Void... params) {
             PackageManager pm = getPackageManager();
             List<ApplicationInfo> apps = pm.getInstalledApplications(0);
 
-            boolean haveSS = false, haveBBX = false;
-
-            for (ApplicationInfo app : apps) {
-                if (app == null) continue;
-                if (app.packageName.equals("com.hashcode.safestrap"))
-                    haveSS = true;
-                if (app.loadLabel(pm).toString().toLowerCase().contains("busybox"))
-                    haveBBX = true;
-                if (haveSS && haveBBX)
-                    break;
-            }
+            boolean haveSS = new File("/etc/safestrap").exists();
+            boolean haveBBX = new File("/system/xbin/busybox").exists();
 
             if (!haveSS || !haveBBX) {
                 Looper.prepare();
@@ -179,14 +150,16 @@ public class MainActivity extends ActionBarActivity {
                         })
                         .show();
                 Looper.loop();
+            } else {
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        flash.setEnabled(true);
+                    }
+                });
             }
 
             return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            flash.setEnabled(true);
         }
     }
 
