@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.uubmub.nc2flasher" >
+    package="com.benwaffle.nc2flasher" >
 
     <application
         android:allowBackup="true"
