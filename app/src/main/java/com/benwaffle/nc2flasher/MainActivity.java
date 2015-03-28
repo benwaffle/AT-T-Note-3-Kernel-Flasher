@@ -102,6 +102,7 @@ public class MainActivity extends ActionBarActivity {
             update("Flashing...");
             List<String> ddout = Shell.SU.run("busybox dd if=\"" + bootimg.getAbsolutePath() + "\" of=/dev/block/mmcblk0p14");
             update("dd output: \n" + ddout.toString());
+            Shell.SU.run("echo 1 > /data/.recovery_mode");
             bootimg.delete();
 
             MainActivity.this.runOnUiThread(new Runnable() {
