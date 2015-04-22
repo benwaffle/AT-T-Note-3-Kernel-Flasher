@@ -7,6 +7,8 @@ Porting
 ----
 Modify the options in `app/src/main/java/com/benwaffle/nc2flasher/MainActivity.java`.
 
+Place desired kernel .img in `app/src/main/assets/`.
+
 Compile with `./gradlew assembleRelease`, the output will be `./app/build/outputs/apk/app-release-unsigned.apk`.
 
 How it Works
