@@ -14,6 +14,28 @@ import java.util.*;
 import eu.chainfire.libsuperuser.Shell;
 
 public class MainActivity extends ActionBarActivity {
+    public final static String
+
+
+
+
+/***************** CONFIGURATION *********************/
+
+        PHONE_MODEL     = "SM-N900A",
+        KERNEL_VERSION  = "NC2",
+        KERNEL_FILENAME = "nc2_kernel_boot.img"
+
+/****************************************************
+
+ Place kernel .img file in app/src/main/assets/
+
+ Compile apk with ./gradlew build
+
+ ****************************************************/
+
+    ;
+
+
     Button flash;
     ProgressBar progress;
 
@@ -26,9 +48,9 @@ public class MainActivity extends ActionBarActivity {
         progress = (ProgressBar) findViewById(R.id.progressBar);
 
         ((ListView) findViewById(R.id.listView)).setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1) {{
-            add("For SM-N900A only!");
+            add("For " + PHONE_MODEL + " only!");
             add("I am not responsible for anything that may happen to your device.");
-            add("Make sure you can flash NL1 or OC1 back.");
+            add("Make sure you can flash your current kernel back.");
         }});
 
         flash.setOnClickListener(new View.OnClickListener() {
@@ -43,7 +65,7 @@ public class MainActivity extends ActionBarActivity {
         if (!new File("/etc/safestrap").exists() || !new File("/system/xbin/busybox").exists()) {
             new AlertDialog.Builder(this)
                     .setCancelable(false)
-                    .setMessage("Either safestrap or busybox could not be found on this device. Both are needed to flash NC2.")
+                    .setMessage("Either safestrap or busybox could not be found on this device. Both are needed to flash " + KERNEL_VERSION)
                     .setIcon(android.R.drawable.ic_delete)
                     .setNeutralButton("OK", new DialogInterface.OnClickListener() {
                         @Override
@@ -70,7 +92,7 @@ public class MainActivity extends ActionBarActivity {
             if (t == null) ((TextView) findViewById(R.id.status_text)).setText(msg);
             else {
                 ((TextView) findViewById(R.id.status_text)).setText(msg + "\n" + t.getMessage());
-                Log.e("NC2 Flasher", msg, t);
+                Log.e(KERNEL_VERSION + " Flasher", msg, t);
                 t.printStackTrace();
             }
         } });
@@ -79,24 +101,24 @@ public class MainActivity extends ActionBarActivity {
 
     class BinaryFlasher extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
-            try (InputStream kernel = getAssets().open("nc2_kernel_boot.img")) {
+            try (InputStream kernel = getAssets().open(KERNEL_FILENAME)) {
                 byte bs[] = new byte[8];
                 kernel.read(bs);
                 if (!Arrays.equals(bs, new byte[]{'A', 'N', 'D', 'R', 'O', 'I', 'D', '!'}))
                     return err("Signature check failed", null);
             } catch (IOException e) {
-                return err("Error reading NC2 kernel", e);
+                return err("Error reading " + KERNEL_VERSION + " kernel", e);
             }
 
             update("Copying kernel");
             File bootimg;
             try {
-                InputStream src = getAssets().open("nc2_kernel_boot.img");
-                bootimg = File.createTempFile("nc2_kernel_boot", ".img");
+                InputStream src = getAssets().open(KERNEL_FILENAME);
+                bootimg = File.createTempFile(KERNEL_FILENAME, ".img");
                 copyFile(src, bootimg);
                 src.close();
             } catch (IOException e) {
-                return err("Error copying nc2_kernel_boot.img to a temp file", e);
+                return err("Error copying " + KERNEL_FILENAME + " to a temp file", e);
             }
 
             update("Flashing...");
