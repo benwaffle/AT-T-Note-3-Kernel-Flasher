@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">NC2 Flasher</string>
+    <string name="phone_model">SM-N900A</string>
+    <string name="kernel_version">NC2</string>
+    <!-- this file goes in assets -->
+    <string name="kernel_filename">nc2_kernel_boot.img</string>
 </resources>
